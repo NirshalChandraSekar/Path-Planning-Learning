@@ -31,9 +31,8 @@ class RRT_Connect:
         cv2.circle(self.map, (start[0], start[1]), 3, [0,255,0], -1)
         cv2.circle(self.map, (goal[0], goal[1]), 3, [0,255,0], -1)
 
-
-        self.start = np.array(start)
-        self.goal = np.array(goal)
+        self.start = start
+        self.goal = goal
         self.step_length = 10
 
         self.T_a = self.init_tree(self.start)
@@ -51,10 +50,11 @@ class RRT_Connect:
     def iterate_rrt_connect(self):
         # Create a random configuration
         while(True):
-            x_cord = random.randrange(0,1200)
-            y_cord = random.randrange(0,500)
-            q_rand = np.array([x_cord, y_cord])
-            if(self.check_collision(q_rand) == False):
+            x_cord = random.randrange(0,1100)
+            y_cord = random.randrange(0,400)
+            q_rand = [x_cord, y_cord]
+            print("line 56", q_rand[::-1])
+            if(self.check_collision(q_rand[::-1]) == False):
                 break
 
         extension_1 = self.extendTowardsPoint(self.T_a, q_rand)
@@ -72,6 +72,7 @@ class RRT_Connect:
 
         
     def extendTowardsPoint(self, tree, point):
+        print("point", point)
         min_dist = math.inf
         nearest_index = 0
         for i in range(len(tree['vertices'])):
@@ -84,14 +85,16 @@ class RRT_Connect:
 
         if (self.euclideanDistance(nearest, point) <= self.step_length):
             q_new = point
-            collision = self.check_collision(q_new)
+            print("line 86", q_new[::-1])
+            collision = self.check_collision(q_new[::-1])
             goal_reached = True
         
-        else:
+        else: 
             x_new = int(nearest[0] + (((point[0]-nearest[0])*self.step_length)/self.euclideanDistance(nearest, point)))
             y_new = int(nearest[1] + (((point[1]-nearest[1])*self.step_length)/self.euclideanDistance(nearest, point)))
-            q_new = np.array([x_new, y_new])
-            collision = self.check_collision(q_new)
+            q_new = [x_new, y_new]
+            print("line 94", q_new[::-1])
+            collision = self.check_collision(q_new[::-1])
             goal_reached = False
 
         if(collision == False):
@@ -123,7 +126,8 @@ class RRT_Connect:
         return dist
 
     def check_collision(self, configuration):
-        if(list(self.map[configuration[1],configuration[0]]) == [0,0,255]):
+        print("configuration", [configuration[0],configuration[1]])
+        if(list(self.map[configuration[0],configuration[1]]) == [0,0,255]):
             return True
         else:
             return False       
@@ -136,7 +140,7 @@ if __name__ == "__main__":
     start = RRT_Connect(map, [20,30], [700,650])
     # cv2.imshow("frame", map)
     # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()  
 
         
 
