@@ -11,8 +11,8 @@ class environment:
         num_obstacles = random.randint(5, 10)  # Random number of obstacles between 5 and 10
         for _ in range(num_obstacles):
             # Random coordinates for the top-left corner of the obstacle
-            x1 = random.randint(0, map_width)
-            y1 = random.randint(0, map_height)
+            x1 = random.randint(0, 1200)
+            y1 = random.randint(0, 500)
             # Random coordinates for the bottom-right corner of the obstacle
             x2 = x1 + random.randint(50, 150)
             y2 = y1 + random.randint(100, 200)
@@ -24,16 +24,27 @@ class environment:
         return map
     
 class RRT_Connect:
-    def __init__(self, map, start, goal):
+    def __init__(self, map):
 
         self.map = map
-
-        cv2.circle(self.map, (start[0], start[1]), 3, [0,255,0], -1)
-        cv2.circle(self.map, (goal[0], goal[1]), 3, [0,255,0], -1)
-
-        self.start = start
-        self.goal = goal
+        while(True):
+            x_1 = random.randint(0,1200)
+            x_2 = random.randint(0,1200)
+            y_1 = random.randint(0,500)
+            y_2 = random.randint(0,500)
+            self.start = (x_1,y_1)
+            self.goal = (x_2, y_2)
+            if(self.check_collision(self.start)==False and self.check_collision(self.goal)==False):
+                break
+    
         self.step_length = 10
+
+        cv2.circle(self.map, (self.start[0], self.start[1]), 4, [0,255,0], -1)
+        cv2.circle(self.map, (self.goal[0], self.goal[1]), 4, [0,0,255], -1)
+
+        cv2.imshow("Start and Goal locations", self.map)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
         self.T_a = self.init_tree(self.start)
         self.T_b = self.init_tree(self.goal)
@@ -53,21 +64,24 @@ class RRT_Connect:
             x_cord = random.randrange(0,1100)
             y_cord = random.randrange(0,400)
             q_rand = [x_cord, y_cord]
-            print("line 56", q_rand[::-1])
+            # print("line 56", q_rand[::-1])
             if(self.check_collision(q_rand[::-1]) == False):
                 break
+        
+        while(True):
 
-        extension_1 = self.extendTowardsPoint(self.T_a, q_rand)
+            extension_1 = self.extendTowardsPoint(self.T_a, q_rand)
 
-        if(extension_1 != "obstacle"):
-            q_latest_index = len(self.T_a["vertices"])-1
-            q_latest = self.T_a["vertices"][q_latest_index]["vertex"]
-            extension_2 = self.extendTowardsPoint(self.T_b, q_latest)
-            if(extension_2 == "connected"):
-                print("trees connected")
-                cv2.imshow("frame", self.map)
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()
+            if(extension_1 != "obstacle"):
+                q_latest_index = len(self.T_a["vertices"])-1
+                q_latest = self.T_a["vertices"][q_latest_index]["vertex"]
+                extension_2 = self.extendTowardsPoint(self.T_b, q_latest)
+                if(extension_2 == "connected"):
+                    print("trees connected")
+                    cv2.imshow("frame", self.map)
+                    cv2.waitKey(0)
+                    cv2.destroyAllWindows()
+                    break
 
 
         
@@ -85,7 +99,7 @@ class RRT_Connect:
 
         if (self.euclideanDistance(nearest, point) <= self.step_length):
             q_new = point
-            print("line 86", q_new[::-1])
+            # print("line 86", q_new[::-1])
             collision = self.check_collision(q_new[::-1])
             goal_reached = True
         
@@ -93,7 +107,7 @@ class RRT_Connect:
             x_new = int(nearest[0] + (((point[0]-nearest[0])*self.step_length)/self.euclideanDistance(nearest, point)))
             y_new = int(nearest[1] + (((point[1]-nearest[1])*self.step_length)/self.euclideanDistance(nearest, point)))
             q_new = [x_new, y_new]
-            print("line 94", q_new[::-1])
+            # print("line 94", q_new[::-1])
             collision = self.check_collision(q_new[::-1])
             goal_reached = False
 
@@ -125,19 +139,30 @@ class RRT_Connect:
         dist = math.sqrt(math.pow((point1[0]-point2[0]),2) + math.pow((point1[1]-point2[1]),2))
         return dist
 
+    # def check_collision(self, configuration):
+    #     print("configuration", [configuration[0],configuration[1]])
+    #     if(list(self.map[configuration[0],configuration[1]]) == [0,0,255]):
+    #         return True
+    #     else:
+    #         return False       
     def check_collision(self, configuration):
-        print("configuration", [configuration[0],configuration[1]])
-        if(list(self.map[configuration[0],configuration[1]]) == [0,0,255]):
-            return True
+        x, y = configuration
+        if 0 <= x < self.map.shape[1] and 0 <= y < self.map.shape[0]:
+            if list(self.map[y, x]) == [0, 0, 255]:
+                return True
+            else:
+                return False
         else:
-            return False       
+            # Handle out-of-bounds indices here
+            # For example, you could return True to indicate a collision
+            return True
 
 
 if __name__ == "__main__":
     map_obj = environment()
     map = map_obj.environment()
     
-    start = RRT_Connect(map, [20,30], [700,650])
+    start = RRT_Connect(map)
     # cv2.imshow("frame", map)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()  
